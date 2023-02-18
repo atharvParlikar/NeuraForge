@@ -2,12 +2,13 @@ import numpy as np
 
 
 class NeuralNetwork:
-    def __init__(self):
-        self.input = 0
-        self.output = 0
-        self.hidden = []
-        self.add_biases = False
+    def __init__(self, inputs=0, outputs=0, hidden=[], add_biases=False):
+        self.input = inputs
+        self.output = outputs
+        self.hidden = hidden
+        self.add_biases = add_biases
         self.biases = []
+
 
     # sets the weights randomly
     def setWeights(self):
