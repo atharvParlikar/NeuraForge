@@ -1,15 +1,15 @@
 import numpy as np
 from loss import MSEloss
-
+import activation
 
 class NeuralNetwork:
-    def __init__(self, inputs=0, outputs=0, hidden=[], add_biases=False):
+    def __init__(self, inputs=0, outputs=0, hidden=[], add_biases=False, activation=None):
         self.input = inputs
         self.output = outputs
         self.hidden = hidden
         self.add_biases = add_biases
+        self.activation = activation
         self.biases = []
-
 
     # sets the weights randomly
     def setWeights(self):
@@ -40,21 +40,31 @@ class NeuralNetwork:
 
     def forward(self, x):
         last_layer = x
-        for weight in self.weights:
-            last_layer = self.dotproduct(last_layer, weight)
-        return last_layer
+        if self.add_biases:
+            if self.activation != None:
+                for (weight, bias) in zip(self.weights, self.biases):
+                    last_layer = self.activation(self.dotproduct(last_layer, weight) + bias)
+            else:
+                for (weight, bias) in zip(self.weights, self.biases):
+                    last_layer = self.dotproduct(last_layer, weight) + bias
 
+        else:
+            for weight in self.weights:
+                last_layer = self.dotproduct(last_layer, weight)
+
+        return last_layer
 
 
 # Example of forward a pass
 nn = NeuralNetwork()
-nn.input = 5
+nn.input = 28*28
 nn.output = 2
 nn.hidden = [2, 2]
 nn.add_biases = True
 nn.setWeights()
-forward = nn.forward([1, 2, 3, 4, 5])
-
-# Example of a loss function
-print(MSEloss(forward, forward))
-
+input_layer = np.random.rand(28*28)
+forward = nn.forward(input_layer)
+nn.activation = activation.tanh
+forward_with_activation = nn.forward(input_layer)
+print(forward)
+print(forward_with_activation)
