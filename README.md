@@ -3,7 +3,7 @@
 Too soon to even create a readme.md
 
 ### Todo
-[x] forward propogation
-[ ] optimization function
-[ ] loss function
-[ ] back propogation
+- [x] forward propogation
+- [ ] optimization function
+- [ ] loss function
+- [ ] back propogation
