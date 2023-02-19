@@ -1,4 +1,5 @@
 import numpy as np
+from loss import MSEloss
 
 
 class NeuralNetwork:
@@ -52,4 +53,8 @@ nn.output = 2
 nn.hidden = [2, 2]
 nn.add_biases = True
 nn.setWeights()
-print(nn.forward([1, 2, 3, 4, 5]))
+forward = nn.forward([1, 2, 3, 4, 5])
+
+# Example of a loss function
+print(MSEloss(forward, forward))
+
