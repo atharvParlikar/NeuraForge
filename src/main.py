@@ -2,69 +2,47 @@ import numpy as np
 from loss import MSEloss
 import activation
 
-class NeuralNetwork:
-    def __init__(self, inputs=0, outputs=0, hidden=[], add_biases=False, activation=None):
-        self.input = inputs
-        self.output = outputs
-        self.hidden = hidden
-        self.add_biases = add_biases
-        self.activation = activation
-        self.biases = []
+class Value:
+    def __init__(self, value, children=()):
+        self.value = value
+        self.grad = 0
+        self._backward = lambda: None
+        self.children = children
+        self.prev = set(self.children)
 
-    # sets the weights randomly
-    def setWeights(self):
-        if self.input != 0 and self.output != 0:
-            if self.hidden == []:
-                self.weights = np.random.rand(self.output, self.input)
-            elif len(self.hidden) == 1:
-                self.weights = [np.random.rand(self.hidden[0], self.input), np.random.rand(
-                    self.output, self.hidden[0]
-                )]
-            else:
-                self.weights = [np.random.rand(self.hidden[0], self.input)]
-                for h in range(1, len(self.hidden)):
-                    self.weights.append(np.random.rand(
-                        self.hidden[h], self.hidden[h - 1]
-                    ))
-                self.weights.append(np.random.rand(
-                    self.output, self.hidden[-1]
-                ))
-        if self.add_biases:
-            self.biases = np.random.rand(len(self.weights))
+    def __add__(self, other):
+        out = Value(self.value + other.value, (self, other))
 
-    def dotproduct(self, layer, weights):
-        product = []
-        for i in weights:
-            product.append(np.dot(layer, i))
-        return product
+        def _backward():
+            self.grad = out.grad
+            other.grad = out.grad
+        out._backward = _backward
+        return out
 
-    def forward(self, x):
-        last_layer = x
-        if self.add_biases:
-            if self.activation != None:
-                for (weight, bias) in zip(self.weights, self.biases):
-                    last_layer = self.activation(self.dotproduct(last_layer, weight) + bias)
-            else:
-                for (weight, bias) in zip(self.weights, self.biases):
-                    last_layer = self.dotproduct(last_layer, weight) + bias
+    def __mul__(self, other):
+        out = Value(self.value * other.value, (self, other))
 
-        else:
-            for weight in self.weights:
-                last_layer = self.dotproduct(last_layer, weight)
+        def _backward():
+            self.grad += out.grad * other.grad
+            other.grad += out.grad * self.grad
+        out._backward = _backward()
+        return out
 
-        return last_layer
+    def backward(self):
+        topo = []
+        visited = set()
 
+        def build_topo(v):
+            if v not in visited:
+                visited.add(v)
+                for child in v.prev:
+                    build_topo(child)
+                topo.append(v)
+        build_topo(self)
 
-# Example of forward a pass
-nn = NeuralNetwork()
-nn.input = 28*28
-nn.output = 2
-nn.hidden = [2, 2]
-nn.add_biases = True
-nn.setWeights()
-input_layer = np.random.rand(28*28)
-forward = nn.forward(input_layer)
-nn.activation = activation.tanh
-forward_with_activation = nn.forward(input_layer)
-print(forward)
-print(forward_with_activation)
+        self.grad = 1
+        for i in reversed(topo):
+            i._backward()
+
+    def __repr__(self):
+        return f'[{self.value} {self.grad}]'
