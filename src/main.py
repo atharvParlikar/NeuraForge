@@ -1,5 +1,4 @@
 import numpy as np
-from activation import sigmoid
 
 class Value:
     def __init__(self, value, children=()):
@@ -22,17 +21,10 @@ class Value:
         out = Value(self.value * other.value, (self, other))
 
         def _backward():
-            self.grad += out.grad * other.grad
-            other.grad += out.grad * self.grad
+            self.grad += other.value * out.grad
+            other.grad += self.value * out.grad
         out._backward = _backward
         return out
-
-    def sigmoid(self):
-        out = Value(sigmoid(self.value), (self))
-
-        def _backward():
-            self.grad += self.sigmoid() * (1 - self.sigmoid())
-            
 
     def backward(self):
         topo = []
@@ -103,13 +95,23 @@ class NeuralNet:
         if self.add_biases:
             for (weight, bias) in zip(self.weights, self.biases):
                 last_layer = self.dotproduct(last_layer, weight)
-                last_layer = [self.activation(x + bias) for x in last_layer]
+                last_layer = [x + bias for x in last_layer]
         else:
             for weight in self.weights:
                 last_layer = self.dotproduct(last_layer, weight)
-                last_layer = [self.activation(x) for x in last_layer]
-        return last_layer
+        return last_layer 
 
-nn = NeuralNet(2, 1, [3], True)
+    def printWeights(self):
+        for x in self.weights:
+            print(x)
+
+
+nn = NeuralNet(2, 1, [3])
 nn.setWeights()
-out = nn.forward([2, 2])
+nn.printWeights()
+out = nn.forward([2, 2])[0]
+out.grad = 1
+out.backward()
+print(out)
+print('=' * 20)
+nn.printWeights()
