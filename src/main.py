@@ -1,12 +1,11 @@
 import numpy as np
-from loss import MSEloss
-import activation
+from activation import sigmoid
 
 class Value:
     def __init__(self, value, children=()):
         self.value = value
         self.grad = 0
-        self._backward = lambda: None
+        self._backward = lambda: 1
         self.children = children
         self.prev = set(self.children)
 
@@ -25,8 +24,15 @@ class Value:
         def _backward():
             self.grad += out.grad * other.grad
             other.grad += out.grad * self.grad
-        out._backward = _backward()
+        out._backward = _backward
         return out
+
+    def sigmoid(self):
+        out = Value(sigmoid(self.value), (self))
+
+        def _backward():
+            self.grad += self.sigmoid() * (1 - self.sigmoid())
+            
 
     def backward(self):
         topo = []
@@ -45,4 +51,65 @@ class Value:
             i._backward()
 
     def __repr__(self):
-        return f'[{self.value} {self.grad}]'
+        return '{' + f'{self.value} {self.grad}' + '}'
+
+
+class NeuralNet:
+    def __init__(self, input, output_layer, hidden=[], add_biases=False):
+        self.input = input
+        self.output_layer = output_layer
+        self.hidden = hidden
+        self.add_biases = add_biases
+        self.activation = lambda _: None
+        self.out = Value(0)
+
+    def random(self, x, y=0):
+        mat = []
+        if y == 0:
+            return [Value(np.random.rand()) for _ in range(x)]
+        for _ in range(y):
+            mat.append([Value(np.random.rand()) for _ in range(x)])
+        return mat
+
+    def setWeights(self):
+        if self.input != 0 and self.output_layer != 0:
+            if self.hidden == []:
+                self.weights = self.random(self.input, self.output_layer)
+            elif len(self.hidden) == 1:
+                self.weights = [self.random(self.input, self.hidden[0]), self.random(
+                    self.hidden[0], self.output_layer
+                )]
+            else:
+                self.weights = [
+                    self.random(self.input, self.hidden[0])]
+                for h in range(1, len(self.hidden)):
+                    self.weights.append(self.random(
+                        self.hidden[h-1], self.hidden[h]
+                    ))
+                self.weights.append(self.random(
+                    self.hidden[-1], self.output_layer
+                ))
+        if self.add_biases:
+            self.biases = self.random(len(self.weights))
+
+    def dotproduct(self, layer, weights):
+        product = []
+        for i in weights:
+            product.append(np.dot(layer, i))
+        return product
+
+    def forward(self, x):
+        last_layer = [Value(i) for i in x]
+        if self.add_biases:
+            for (weight, bias) in zip(self.weights, self.biases):
+                last_layer = self.dotproduct(last_layer, weight)
+                last_layer = [self.activation(x + bias) for x in last_layer]
+        else:
+            for weight in self.weights:
+                last_layer = self.dotproduct(last_layer, weight)
+                last_layer = [self.activation(x) for x in last_layer]
+        return last_layer
+
+nn = NeuralNet(2, 1, [3], True)
+nn.setWeights()
+out = nn.forward([2, 2])
