@@ -1,4 +1,5 @@
 import numpy as np
+from activation import tanh
 
 class Value:
     def __init__(self, value, children=()):
@@ -17,6 +18,16 @@ class Value:
         out._backward = _backward
         return out
 
+    def __sub__(self, other):
+        out = Value(self.value - other.value, (self, other))
+
+        def _backward():
+            self.grad = out.grad
+            other.grad = -out.grad
+        out._backward = _backward
+
+        return out
+
     def __mul__(self, other):
         out = Value(self.value * other.value, (self, other))
 
@@ -24,6 +35,28 @@ class Value:
             self.grad += other.value * out.grad
             other.grad += self.value * out.grad
         out._backward = _backward
+        return out
+
+    def __truediv__(self, other):
+        out = Value(self.value / other.value, (self, other))
+
+        def _backward():
+            self.grad += out.grad / other.value
+            other.grad += out.grad * -(self.value / other.value ** 2)
+        out._backward = _backward
+
+        return out
+
+    def __neg__(self):
+        return self * Value(-1)
+
+    def exp(self):
+        out = Value(np.e ** self.value, (self,))
+
+        def _backward():
+            self.grad += out.value
+        out._backward = _backward
+        
         return out
 
     def backward(self):
@@ -42,6 +75,18 @@ class Value:
         for i in reversed(topo):
             i._backward()
 
+    def tanh(self):
+        def _tanh(x):
+            return (np.e ** 2*x - 1) / (np.e ** 2*x + 1)
+
+        out = Value(_tanh(self.value), (self))
+
+        def _backward():
+            self.grad += 1 - _tanh(self.value) ** 2
+        self._backward = _backward
+        
+        return out
+
     def __repr__(self):
         return '{' + f'{self.value} {self.grad}' + '}'
 
@@ -52,7 +97,6 @@ class NeuralNet:
         self.output_layer = output_layer
         self.hidden = hidden
         self.add_biases = add_biases
-        self.activation = lambda _: None
         self.out = Value(0)
 
     def random(self, x, y=0):
@@ -96,6 +140,7 @@ class NeuralNet:
             for (weight, bias) in zip(self.weights, self.biases):
                 last_layer = self.dotproduct(last_layer, weight)
                 last_layer = [x + bias for x in last_layer]
+            
         else:
             for weight in self.weights:
                 last_layer = self.dotproduct(last_layer, weight)
@@ -114,19 +159,6 @@ nn = NeuralNet(2, 1, [3], True)
 nn.setWeights()
 out = nn.forward([2, 2])[0]
 out.grad = 1
-out.backward()
-print('=' * 40)
-print("         OUTPUT")
-print('=' * 40)
-print(out)
 
-print("\n" + '=' * 40)
-print("         WEIGHTS")
-print('=' * 40)
-nn.printWeights()
-
-print("\n" + '=' * 40)
-print("         BIASES")
-print('=' * 40)
-print(nn.biases)
-
+x = Value(1)
+print(tanh(x))
