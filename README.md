@@ -6,4 +6,4 @@ Too soon to even create a readme.md
 - [x] forward propogation
 - [x] optimization function
 - [x] loss function
-- [ ] back propogation
+- [x] back propogation
