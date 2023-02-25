@@ -75,18 +75,6 @@ class Value:
         for i in reversed(topo):
             i._backward()
 
-    def tanh(self):
-        def _tanh(x):
-            return (np.e ** 2*x - 1) / (np.e ** 2*x + 1)
-
-        out = Value(_tanh(self.value), (self))
-
-        def _backward():
-            self.grad += 1 - _tanh(self.value) ** 2
-        self._backward = _backward
-        
-        return out
-
     def __repr__(self):
         return '{' + f'{self.value} {self.grad}' + '}'
 
