@@ -105,13 +105,28 @@ class NeuralNet:
         for x in self.weights:
             print(x)
 
+    def printBiases(self):
+        for x in self.biases:
+            print(x)
 
-nn = NeuralNet(2, 1, [3])
+
+nn = NeuralNet(2, 1, [3], True)
 nn.setWeights()
-nn.printWeights()
 out = nn.forward([2, 2])[0]
 out.grad = 1
 out.backward()
+print('=' * 40)
+print("         OUTPUT")
+print('=' * 40)
 print(out)
-print('=' * 20)
+
+print("\n" + '=' * 40)
+print("         WEIGHTS")
+print('=' * 40)
 nn.printWeights()
+
+print("\n" + '=' * 40)
+print("         BIASES")
+print('=' * 40)
+print(nn.biases)
+
