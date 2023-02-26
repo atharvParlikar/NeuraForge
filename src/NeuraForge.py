@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.lib import math
 
 class Value:
     def __init__(self, value, children=()):
@@ -8,9 +9,23 @@ class Value:
         self.children = children
         self.prev = set(self.children)
 
-    def __add__(self, other):
-        out = Value(self.value + other.value, (self, other))
 
+    def __add__(self, other):
+        if isinstance(other, (int, float)):
+            return self + Value(other)
+
+        out = Value(self.value + other.value, (self, other))
+        def _backward():
+            self.grad = out.grad
+            other.grad = out.grad
+        out._backward = _backward
+        return out
+
+    def __radd__(self, other):
+        if isinstance(other, (int, float)):
+            return self + Value(other)
+
+        out = Value(self.value + other.value, (self, other))
         def _backward():
             self.grad = out.grad
             other.grad = out.grad
@@ -18,6 +33,9 @@ class Value:
         return out
 
     def __sub__(self, other):
+        if isinstance(other, (int, float)):
+            return self - Value(other)
+
         out = Value(self.value - other.value, (self, other))
 
         def _backward():
@@ -27,27 +45,60 @@ class Value:
 
         return out
 
-    def __mul__(self, other):
-        out = Value(self.value * other.value, (self, other))
 
+    def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return self * Value(other)
+
+        out = Value(self.value * other.value, (self, other))
         def _backward():
             self.grad += other.value * out.grad
             other.grad += self.value * out.grad
         out._backward = _backward
         return out
 
-    def __truediv__(self, other):
-        out = Value(self.value / other.value, (self, other))
+    def __rmul__(self, other):
+        if isinstance(other, (int, float)):
+            return self * Value(other)
 
+        out = Value(self.value * other.value, (self, other))
         def _backward():
-            self.grad += out.grad / other.value
-            other.grad += out.grad * -(self.value / other.value ** 2)
+            self.grad += other.value * out.grad
+            other.grad += self.value * out.grad
+        out._backward = _backward
+        return out
+
+    
+    def __truediv__(self, other):
+        if isinstance(other, (int, float)):
+            return self / Value(other)
+
+        out = Value(self.value / other.value, (self, other))
+        def _backward():
+            self.grad += 1 / other.value
+            other.grad += -(self.value / other.value ** 2) 
         out._backward = _backward
 
         return out
 
+    
+    def __rtruediv__(self, other):
+        if isinstance(other, (int, float)):
+            return Value(other) / self
+
+        out = Value(other.value / self.value, (other, self))
+
+        def _backward():
+            self.grad += -(other.value / self.value ** 2)
+            other.grad += 1 / self.value
+        out._backward = _backward
+
+        return out
+
+
     def __neg__(self):
         return self * Value(-1)
+
 
     def __pow__(self, other):
         assert isinstance(other, (int, float))
@@ -59,13 +110,13 @@ class Value:
 
         return out
 
-    def exp(self):
-        out = Value(np.e ** self.value, (self,))
+    def __rpow__(self, other):
+        out = Value(other ** self.value, (self,))
 
         def _backward():
-            self.grad += out.value
+            self.grad += (other ** self.value) * math.log(other)
         out._backward = _backward
-        
+
         return out
 
     def backward(self):
@@ -158,3 +209,7 @@ class NeuralNet:
     def printBiases(self):
         for x in self.biases:
             print(x)
+
+
+def debug(x):
+    print(f"[debug] {x}")

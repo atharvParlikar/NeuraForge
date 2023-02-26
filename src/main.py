@@ -1,14 +1,8 @@
-from NeuraForge import NeuralNet, Value
-from loss import MSEloss
-from activation import tanh
+from activation import sigmoid
+from math import e
+from NeuraForge import Value
 
-nn = NeuralNet(2, 1, [3], True, tanh)
-nn.setWeights()
-nn.printWeights()
-print("=" * 50)
-out = nn.forward([1, 2])
-loss = MSEloss(out, [Value(1)])
-loss.backward()
-print(f"Loss: {loss}")
-nn.printWeights()
-
+a = Value(2)
+b = e ** -a
+b.backward()
+print(a, b)
