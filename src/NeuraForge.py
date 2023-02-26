@@ -119,6 +119,9 @@ class Value:
 
         return out
 
+    def __repr__(self):
+        return '{' + f'{self.value} {self.grad}' + '}'
+
     def backward(self):
         topo = []
         visited = set()
@@ -134,9 +137,24 @@ class Value:
         self.grad = 1
         for i in reversed(topo):
             i._backward()
+        
+    def tanh(self):
+        out = Value((math.e ** self.value - math.e ** -self.value) / (math.e ** self.value + math.e ** -self.value), (self,))
+        
+        def _backward():
+            self.grad = 1 - out.value ** 2
+        out._backward = _backward
+        
+        return out
 
-    def __repr__(self):
-        return '{' + f'{self.value} {self.grad}' + '}'
+    def sigmoid(self):
+        out = Value(1 / (1 + math.e ** self.value), (self,))
+
+        def _backward():
+            self.grad = out.value * (1 - out.value)
+        out._backward = _backward
+
+        return out
 
 
 class NeuralNet:

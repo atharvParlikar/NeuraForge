@@ -1,8 +1,8 @@
-from activation import sigmoid
+from activation import sigmoid, tanh
 from math import e
 from NeuraForge import Value
 
 a = Value(2)
-b = e ** -a
+b = a.tanh()
 b.backward()
-print(a, b)
+print(f"a := {a} ; b := {b}")
