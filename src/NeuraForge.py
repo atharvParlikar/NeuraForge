@@ -21,7 +21,6 @@ class Value:
             other.grad += out.grad
         out._backward = _backward
 
-        print("add")
         return out
 
     def __radd__(self, other):
@@ -34,7 +33,6 @@ class Value:
             other.grad += out.grad
         out._backward = _backward
 
-        print("radd")
         return out
 
     def __sub__(self, other):
@@ -48,7 +46,6 @@ class Value:
             other.grad += -out.grad
         out._backward = _backward
 
-        print("sub")
         return out
 
 
@@ -62,7 +59,6 @@ class Value:
             other.grad += self.value * out.grad
         out._backward = _backward
 
-        print("mul")
         return out
 
     def __rmul__(self, other):
@@ -75,22 +71,18 @@ class Value:
             other.grad += self.value * out.grad
         out._backward = _backward
 
-        print("rmul")
         return out
 
     
     def __truediv__(self, other):
-        print("truediv")
         return self * other ** -1
 
     
     def __rtruediv__(self, other):
-        print("rtruediv")
         return other * self ** -1
 
 
     def __neg__(self):
-        print("negation")
         return self * Value(-1)
 
 
@@ -102,17 +94,15 @@ class Value:
             self.grad += (other * self.value ** (other - 1)) * out.grad
         out._backward = _backward
 
-        print("pow")
         return out
 
     def __rpow__(self, other):
         out = Value(other ** self.value, (self,))
 
         def _backward():
-            self.grad += (other ** self.value) * math.log(other)
+            self.grad += ((other ** self.value) * math.log(other)) * out.grad
         out._backward = _backward
 
-        print("rpow")
         return out
 
     def __repr__(self):
@@ -199,39 +189,10 @@ class NeuralNet:
             product.append(np.dot(layer, i))
         return product
 
-    # def forward(self, x):
-    #     last_layer = [Value(i) for i in x]
-    #     if self.add_biases:
-    #         if self.activation != None:
-    #             for (weight, bias) in zip(self.weights, self.biases):
-    #                 last_layer = self.dotproduct(last_layer, weight)
-    #                 print(f'self.weights := {self.weights}')
-    #                 print(f'weights := {weight}')
-    #                 for i in last_layer: print(i)
-    #                 if self.activation == "tanh":
-    #                    for x in range(len(last_layer)):
-    #                        last_layer[x] = [value.tanh() for value in last_layer[x]]
-    #                 elif self.activation == "sigmoid":
-    #                     last_layer = [(x + bias).sigmoid() for x in last_layer]
-    #         
-    #     else:
-    #         if self.activation != None:
-    #             for weight in self.weights:
-    #                 last_layer += self.dotproduct(last_layer, weight)
-    #                 if self.activation == "tanh":
-    #                     last_layer = [x.tanh() for x in last_layer]
-    #                 elif self.activation == "sigmoid":
-    #                     last_layer = [x.sigmoid() for x in last_layer]
-    #         else:
-    #             for weight in self.weights:
-    #                 last_layer = self.dotproduct(last_layer, weight)
-
-    #     return last_layer
-
     def forward(self, x):
         last_layer = [Value(i) for i in x]
         for (weight, bias) in zip(self.weights, self.biases):
-            last_layer = (np.array(self.dotproduct(last_layer, weight)) + bias).activation()
+            last_layer = self.activation(np.array(self.dotproduct(last_layer, weight)) + bias)
         return last_layer
 
     def printWeights(self):

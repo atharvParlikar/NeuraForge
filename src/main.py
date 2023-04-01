@@ -1,9 +1,12 @@
-from NeuraForge import Value
-import numpy as np
+from NeuraForge import NeuralNet
+from activation import tanh, sigmoid
+from loss import MSEloss
 
-e = np.e
+nn = NeuralNet(2, 1, [3], True, tanh)
+nn.setWeights()
+y = nn.forward([1,2])
+loss = MSEloss(y, [1])
 
-a = Value(1)
-b = 1 / (1 + e ** -a)
-b.backward()
-print(a)
+loss.backward()
+
+nn.printWeights()
