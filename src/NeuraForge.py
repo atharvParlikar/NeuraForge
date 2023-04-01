@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.lib import math
+from activation import no_activation
 
 class Value:
     def __init__(self, value, children=()):
@@ -158,7 +159,7 @@ class Value:
 
 
 class NeuralNet:
-    def __init__(self, input, output_layer, hidden=[], add_biases=False, activation=None):
+    def __init__(self, input, output_layer, hidden=[], add_biases=False, activation=no_activation):
         self.input = input
         self.output_layer = output_layer
         self.hidden = hidden
@@ -194,6 +195,8 @@ class NeuralNet:
                 ))
         if self.add_biases:
             self.biases = self.random(len(self.weights))
+        else:
+            self.biases = [0] * len(self.weights)
 
     def dotproduct(self, layer, weights):
         product = []
@@ -201,26 +204,47 @@ class NeuralNet:
             product.append(np.dot(layer, i))
         return product
 
+    # def forward(self, x):
+    #     last_layer = [Value(i) for i in x]
+    #     if self.add_biases:
+    #         if self.activation != None:
+    #             for (weight, bias) in zip(self.weights, self.biases):
+    #                 last_layer = self.dotproduct(last_layer, weight)
+    #                 print(f'self.weights := {self.weights}')
+    #                 print(f'weights := {weight}')
+    #                 for i in last_layer: print(i)
+    #                 if self.activation == "tanh":
+    #                    for x in range(len(last_layer)):
+    #                        last_layer[x] = [value.tanh() for value in last_layer[x]]
+    #                 elif self.activation == "sigmoid":
+    #                     last_layer = [(x + bias).sigmoid() for x in last_layer]
+    #         
+    #     else:
+    #         if self.activation != None:
+    #             for weight in self.weights:
+    #                 last_layer += self.dotproduct(last_layer, weight)
+    #                 if self.activation == "tanh":
+    #                     last_layer = [x.tanh() for x in last_layer]
+    #                 elif self.activation == "sigmoid":
+    #                     last_layer = [x.sigmoid() for x in last_layer]
+    #         else:
+    #             for weight in self.weights:
+    #                 last_layer = self.dotproduct(last_layer, weight)
+
+    #     return last_layer
+
     def forward(self, x):
         last_layer = [Value(i) for i in x]
-        if self.add_biases:
-            if self.activation != None:
-                for (weight, bias) in zip(self.weights, self.biases):
-                    last_layer = self.dotproduct(last_layer, weight)
-                    last_layer = [self.activation(x + bias) for x in last_layer]
-            
-        else:
-            if self.activation != None:
-                for weight in self.weights:
-                    last_layer += self.dotproduct(last_layer, weight) 
-                    last_layer = [self.activation(x) for x in last_layer]
-            else:
-                for weight in self.weights:
-                    last_layer = self.dotproduct(last_layer, weight)
-
-        return last_layer 
+        for (weight, bias) in zip(self.weights, self.biases):
+            last_layer = self.activation(np.array(self.dotproduct(last_layer, weight)) + bias)
+        return last_layer
 
     def printWeights(self):
+        if not hasattr(self, 'weights'):
+            print("set weights first")
+            print("aborting...")
+            exit()
+
         for x in self.weights:
             print(x)
 

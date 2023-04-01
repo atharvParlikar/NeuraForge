@@ -1,8 +1,16 @@
-from activation import sigmoid, tanh
-from math import e
-from NeuraForge import Value
+from NeuraForge import NeuralNet
+from loss import MSEloss
+import numpy as np
 
-a = Value(2)
-b = a.tanh()
-b.backward()
-print(f"a := {a} ; b := {b}")
+nn = NeuralNet(3, 1, [2], False)
+print(nn.activation)
+nn.setWeights()
+
+input_ = [1,2,3]
+
+y = nn.forward(input_)
+
+loss = MSEloss(y, [3])
+print(loss)
+
+loss.backward()

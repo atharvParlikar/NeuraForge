@@ -5,3 +5,6 @@ def sigmoid(x):
 
 def tanh(x):
     return (e ** x - e ** -x) / (e ** x + e ** -x)
+
+def no_activation(x):
+    return x
