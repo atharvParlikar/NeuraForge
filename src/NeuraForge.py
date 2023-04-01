@@ -17,9 +17,11 @@ class Value:
 
         out = Value(self.value + other.value, (self, other))
         def _backward():
-            self.grad = out.grad
-            other.grad = out.grad
+            self.grad += out.grad
+            other.grad += out.grad
         out._backward = _backward
+
+        print("add")
         return out
 
     def __radd__(self, other):
@@ -28,9 +30,11 @@ class Value:
 
         out = Value(self.value + other.value, (self, other))
         def _backward():
-            self.grad = out.grad
-            other.grad = out.grad
+            self.grad += out.grad
+            other.grad += out.grad
         out._backward = _backward
+
+        print("radd")
         return out
 
     def __sub__(self, other):
@@ -40,10 +44,11 @@ class Value:
         out = Value(self.value - other.value, (self, other))
 
         def _backward():
-            self.grad = out.grad
-            other.grad = -out.grad
+            self.grad += out.grad
+            other.grad += -out.grad
         out._backward = _backward
 
+        print("sub")
         return out
 
 
@@ -56,6 +61,8 @@ class Value:
             self.grad += other.value * out.grad
             other.grad += self.value * out.grad
         out._backward = _backward
+
+        print("mul")
         return out
 
     def __rmul__(self, other):
@@ -67,37 +74,23 @@ class Value:
             self.grad += other.value * out.grad
             other.grad += self.value * out.grad
         out._backward = _backward
+
+        print("rmul")
         return out
 
     
     def __truediv__(self, other):
-        if isinstance(other, (int, float)):
-            return self / Value(other)
-
-        out = Value(self.value / other.value, (self, other))
-        def _backward():
-            self.grad += 1 / other.value
-            other.grad += -(self.value / other.value ** 2) 
-        out._backward = _backward
-
-        return out
+        print("truediv")
+        return self * other ** -1
 
     
     def __rtruediv__(self, other):
-        if isinstance(other, (int, float)):
-            return Value(other) / self
-
-        out = Value(other.value / self.value, (other, self))
-
-        def _backward():
-            self.grad += -(other.value / self.value ** 2)
-            other.grad += 1 / self.value
-        out._backward = _backward
-
-        return out
+        print("rtruediv")
+        return other * self ** -1
 
 
     def __neg__(self):
+        print("negation")
         return self * Value(-1)
 
 
@@ -106,9 +99,10 @@ class Value:
         out = Value(self.value ** other, (self,))
         
         def _backward():
-            self.grad = (other * self.value ** (other - 1)) * out.grad
+            self.grad += (other * self.value ** (other - 1)) * out.grad
         out._backward = _backward
 
+        print("pow")
         return out
 
     def __rpow__(self, other):
@@ -118,6 +112,7 @@ class Value:
             self.grad += (other ** self.value) * math.log(other)
         out._backward = _backward
 
+        print("rpow")
         return out
 
     def __repr__(self):
@@ -236,7 +231,7 @@ class NeuralNet:
     def forward(self, x):
         last_layer = [Value(i) for i in x]
         for (weight, bias) in zip(self.weights, self.biases):
-            last_layer = self.activation(np.array(self.dotproduct(last_layer, weight)) + bias)
+            last_layer = (np.array(self.dotproduct(last_layer, weight)) + bias).activation()
         return last_layer
 
     def printWeights(self):
