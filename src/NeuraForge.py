@@ -169,12 +169,14 @@ class NeuralNet:
                     self.hidden[0], self.output_layer
                 )]
             else:
-                self.weights = [
-                    self.random(self.input, self.hidden[0])]
+                # Input -> Hidden
+                self.weights = [self.random(self.input, self.hidden[0])]
+                # Hidden -> Hidden
                 for h in range(1, len(self.hidden)):
                     self.weights.append(self.random(
                         self.hidden[h-1], self.hidden[h]
                     ))
+                # Hidden -> Output
                 self.weights.append(self.random(
                     self.hidden[-1], self.output_layer
                 ))
@@ -183,7 +185,7 @@ class NeuralNet:
         else:
             self.biases = [0] * len(self.weights)
 
-    def dotproduct(self, layer, weights):
+    def dotproduct(self, layer, weights): # not in use anymore but still keeping it just in case
         product = []
         for i in weights:
             product.append(np.dot(layer, i))
@@ -192,7 +194,7 @@ class NeuralNet:
     def forward(self, x):
         last_layer = [Value(i) for i in x]
         for (weight, bias) in zip(self.weights, self.biases):
-            last_layer = self.activation(np.array(self.dotproduct(last_layer, weight)) + bias)
+            last_layer = self.activation(np.dot(weight, last_layer) + bias)
         return last_layer
 
     def printWeights(self):
