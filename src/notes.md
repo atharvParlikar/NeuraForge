@@ -13,3 +13,13 @@ The forward pass of this size only consists of 3 matrix multiplications,
 These 3 matrix dotproducts shouldn't cost 1 second, or maybe it's about all the shit
 that goes in the background when I multiply 2 Value classes, to see if there's a
 difference I need to test it on vanilla numpy arrays.
+
+## Vanilla numpy array speed test.
+
+As i thought the numpy arrays are much faster than the Value arrays almost 37x faster
+while a single forward pass takes 1.1 seconds, the same amount of matrix dotproducts
+using numpy arrays take only 0.03 seconds.
+
+I also checked pytorch performance and for the smame neural architecture it was 0.02 seconds
+per forward pass :O
+

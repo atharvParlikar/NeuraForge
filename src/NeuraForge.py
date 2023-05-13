@@ -48,7 +48,6 @@ class Value:
 
         return out
 
-
     def __mul__(self, other):
         if isinstance(other, (int, float)):
             return self * Value(other)
