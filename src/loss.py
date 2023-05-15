@@ -2,7 +2,7 @@ from NeuraForge import Value
 
 def MSEloss(x, y):
     assert len(x) == len(y)
-    if isinstance(y[0], int):
+    if not isinstance(y[0], Value):
         y = [Value(i) for i in y]
     sum_ = Value(0)
     for (x_, y_) in zip(x, y):

@@ -1,25 +1,38 @@
-from NeuraForge import NeuralNet, debug
-from activation import tanh, sigmoid
+from NeuraForge import NeuralNet, Value, argmax
+from activation import softmax, tanh
 from loss import MSEloss
-import numpy as np
-import timeit
+import pandas as pd
+from optim import gradient_decent
+import random
+import matplotlib.pyplot as plt
 
-start = timeit.default_timer()
+data = pd.read_csv('winequality-red.csv')
 
-nn = NeuralNet(28*28, 10, [64, 64], True, tanh)
-nn.setWeights()
-y = nn.forward(np.random.rand(28*28))
+x_train, y_train = data[data.columns[:-1]][:1200] ,data[data.columns[-1]][:1200]
+x_test, y_test = data[data.columns[:-1]][1200:] ,data[data.columns[-1]][1200:]
 
-print(f'[forward pass] {timeit.default_timer() - start} seconds')
+y_train = [[1 if i == x - 3 else 0 for i in range(6)] for x in y_train]
+y_test = [[1 if i == x - 3 else 0 for i in range(6)] for x in y_test]
 
-start = timeit.default_timer()
+losses = []
 
-input_ = np.random.rand(28*28)
-weights1 = np.random.rand(28*28, 64)
-hidden1 = np.dot(input_, weights1)
-weights2 = np.random.rand(64, 64)
-hidden2 = np.dot(hidden1, weights2)
-weights3 = np.random.rand(64, 10)
-output = np.dot(hidden2, weights3)
+net = NeuralNet(11, 6, [20], activation=[tanh, softmax], add_biases=True)
+net.setWeights()
 
-print(f'[matrix dotproduct] {timeit.default_timer() - start} seconds')
+
+for i in range(0, 300):
+    y = net.forward(x_train.iloc[i])
+    loss: Value = MSEloss(y, y_train[i])
+    loss.backward()
+    gradient_decent([net.weights, net.biases], 0.01)
+    net.reset_grad()
+    losses.append(loss.value)
+    print(f"epoch: {i + 1} ; loss := {loss}")
+
+plt.plot(losses)
+plt.savefig('loss-plt.png')
+plt.close()
+
+index = random.randint(1, 100)
+
+print(f"\n\ny := {net.forward(x_test.iloc[index])}; actual := {y_test[index]}")

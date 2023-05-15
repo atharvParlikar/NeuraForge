@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.lib import math
 from activation import no_activation
+import random
 
 class Value:
     def __init__(self, value, children=()):
@@ -24,16 +25,7 @@ class Value:
         return out
 
     def __radd__(self, other):
-        if isinstance(other, (int, float)):
-            return self + Value(other)
-
-        out = Value(self.value + other.value, (self, other))
-        def _backward():
-            self.grad += out.grad
-            other.grad += out.grad
-        out._backward = _backward
-
-        return out
+        return self + other
 
     def __sub__(self, other):
         if isinstance(other, (int, float)):
@@ -48,6 +40,9 @@ class Value:
 
         return out
 
+    def __rsub__(self, other):
+        return -other + self
+
     def __mul__(self, other):
         if isinstance(other, (int, float)):
             return self * Value(other)
@@ -61,16 +56,7 @@ class Value:
         return out
 
     def __rmul__(self, other):
-        if isinstance(other, (int, float)):
-            return self * Value(other)
-
-        out = Value(self.value * other.value, (self, other))
-        def _backward():
-            self.grad += other.value * out.grad
-            other.grad += self.value * out.grad
-        out._backward = _backward
-
-        return out
+        return self * other
 
     
     def __truediv__(self, other):
@@ -96,6 +82,7 @@ class Value:
         return out
 
     def __rpow__(self, other):
+        assert isinstance(other, (int, float))
         out = Value(other ** self.value, (self,))
 
         def _backward():
@@ -122,7 +109,7 @@ class Value:
         self.grad = 1
         for i in reversed(topo):
             i._backward()
-        
+
     def tanh(self):
         out = Value((math.e ** self.value - math.e ** -self.value) / (math.e ** self.value + math.e ** -self.value), (self,))
         
@@ -142,13 +129,23 @@ class Value:
         return out
 
 
+class Neuron:
+    def __init__(self, inputs) -> None:
+        self.w = [Value(random.uniform(-1, 1)) for _ in range(inputs)]
+        self.b = Value(random.uniform(-1, 1))
+
+    def __call__(self, x):
+        act = sum((wi*xi for wi, xi in zip(self.w, x)), self.b)
+        out = act.tanh()
+        return out
+
 class NeuralNet:
     def __init__(self, input, output_layer, hidden=[], add_biases=False, activation=no_activation):
         self.input = input
         self.output_layer = output_layer
         self.hidden = hidden
         self.add_biases = add_biases
-        self.activation = activation
+        self.activation = [activation] * (1 + len(hidden)) if callable(activation) else activation
         self.out = Value(0)
 
     def random(self, x, y=0):
@@ -190,10 +187,20 @@ class NeuralNet:
             product.append(np.dot(layer, i))
         return product
 
+    def reset_grad(self):
+        for i in range(len(self.weights)):
+            for j in range(len(self.weights[i])):
+                for k in range(len(self.weights[i][j])):
+                    self.weights[i][j][k].grad = 0
+        
+        for i in range(len(self.biases)):
+            self.biases[i].grad = 0
+
     def forward(self, x):
-        last_layer = [Value(i) for i in x]
-        for (weight, bias) in zip(self.weights, self.biases):
-            last_layer = self.activation(np.dot(weight, last_layer) + bias)
+        assert len(self.activation) == 1 + len(self.hidden)
+        last_layer = x
+        for (weight, bias, activation) in zip(self.weights, self.biases, self.activation):
+            last_layer = activation(np.dot(weight, last_layer) + bias)
         return last_layer
 
     def printWeights(self):
@@ -212,3 +219,15 @@ class NeuralNet:
 
 def debug(x):
     print(f"[debug] {x}")
+
+def print_mat(x):
+    for count, i in enumerate(x):
+        print(f"{count + 1}{' ' * (2 if (count + 1) < 10 else 1)}[{','.join([str(round(_.value, 1)) for _ in i])}]")
+
+
+def argmax(A):
+    max_index = max(range(len(A)), key=lambda i: A[i].value)
+    B = [0] * len(A)
+    B[max_index] = 1
+    return B
+
