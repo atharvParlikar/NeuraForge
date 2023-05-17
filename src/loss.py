@@ -9,3 +9,7 @@ def MSEloss(x, y):
         sum_ += (x_ - y_) ** 2
 
     return sum_ / Value(len(x))
+
+def MSEloss_pure(x, y):
+    out: Value = (x - y) ** 2
+    return out

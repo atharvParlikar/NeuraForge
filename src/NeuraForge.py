@@ -110,6 +110,9 @@ class Value:
         for i in reversed(topo):
             i._backward()
 
+    def set_gradient(self, g):
+        self.grad = g
+
     def tanh(self):
         out = Value((math.e ** self.value - math.e ** -self.value) / (math.e ** self.value + math.e ** -self.value), (self,))
         
@@ -189,12 +192,10 @@ class NeuralNet:
 
     def reset_grad(self):
         for i in range(len(self.weights)):
-            for j in range(len(self.weights[i])):
-                for k in range(len(self.weights[i][j])):
-                    self.weights[i][j][k].grad = 0
-        
-        for i in range(len(self.biases)):
-            self.biases[i].grad = 0
+            self.weights[i].grad = 0
+        if self.add_biases:
+            for i in range(len(self.biases)):
+                self.biases[i].grad = 0
 
     def forward(self, x):
         assert len(self.activation) == 1 + len(self.hidden)
@@ -230,4 +231,3 @@ def argmax(A):
     B = [0] * len(A)
     B[max_index] = 1
     return B
-
