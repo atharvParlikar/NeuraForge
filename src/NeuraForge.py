@@ -192,7 +192,8 @@ class NeuralNet:
 
     def reset_grad(self):
         for i in range(len(self.weights)):
-            self.weights[i].grad = 0
+            for j in range(len(self.weights[i])):
+                self.weights[i][j].grad = 0
         if self.add_biases:
             for i in range(len(self.biases)):
                 self.biases[i].grad = 0
