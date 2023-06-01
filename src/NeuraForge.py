@@ -200,10 +200,10 @@ class NeuralNet:
 
     def forward(self, x):
         assert len(self.activation) == 1 + len(self.hidden)
-        last_layer = x
+        previous_layer = x
         for (weight, bias, activation) in zip(self.weights, self.biases, self.activation):
-            last_layer = activation(np.dot(weight, last_layer) + bias)
-        return last_layer
+            previous_layer = activation(np.dot(weight, previous_layer) + bias)
+        return previous_layer
 
     def printWeights(self):
         if not hasattr(self, 'weights'):
